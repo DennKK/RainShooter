@@ -14,22 +14,42 @@ class Player(object):
 
     def handle_keys(self):
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT]:
+        if keys[pygame.K_a]:
             self.x -= 5
-        if keys[pygame.K_RIGHT]:
+        if keys[pygame.K_d]:
             self.x += 5
 
     def draw(self):
         pygame.draw.rect(screen, (0, 0, 128), [self.x, HEIGHT - 120, self.x_size, self.y_size])
 
+    def update(self):
         if self.x >= WIDTH - self.x_size:
             self.x = WIDTH - self.x_size - 5
         if self.x <= 0:
             self.x = 5
 
+    def create_bullet(self):
+        return Bullet(self.x, HEIGHT - 120, self.x_size)
+
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y, x_size):
+        super().__init__()
+        self.image = pygame.Surface((10, 25))
+        self.image.fill((255, 255, 255))
+        self.rect = self.image.get_rect(center=(pos_x + x_size // 2, pos_y))
+
+    def update(self):
+        self.rect.y -= 10
+
+        if self.rect.y <= -10:
+            self.kill()
+
 
 player = Player()
 clock = pygame.time.Clock()
+
+bullet_group = pygame.sprite.Group()
 
 
 def main():
@@ -39,11 +59,17 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_w:
+                    bullet_group.add(player.create_bullet())
+
         clock.tick(60)
         screen.fill([120, 10, 70])
+        bullet_group.draw(screen)
         player.draw()
         player.handle_keys()
-        pygame.display.update()
+        bullet_group.update()
+        player.update()
         pygame.display.flip()
 
 
