@@ -15,30 +15,34 @@ enemyIMG = pygame.image.load('images/enemy.png')
 enemyIMG = pygame.transform.scale(enemyIMG, (80, 80))
 
 
-class Player(object):
+class Player(pygame.sprite.Sprite):
     def __init__(self):
-        self.player_rect = playerIMG.get_rect()
-        self.x = WIDTH // 2 - player_size_x // 2
-
-    def handle_keys(self):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_a]:
-            self.x -= 5
-        if keys[pygame.K_d]:
-            self.x += 5
-
-    def draw(self):
-        # pygame.draw.rect(screen, (0, 0, 128), [self.x, HEIGHT - 120, self.x_size, self.y_size])
-        screen.blit(playerIMG, [self.x, HEIGHT - 120, self.player_rect.x, self.player_rect.y])
+        pygame.sprite.Sprite.__init__(self)
+        self.image = playerIMG
+        self.rect = self.image.get_rect()
+        self.rect.centerx = WIDTH // 2 
+        self.rect.top = HEIGHT - 120
+        self.speedx = 0
 
     def update(self):
-        if self.x >= WIDTH - player_size_x:
-            self.x = WIDTH - player_size_x - 5
-        if self.x <= 0:
-            self.x = 5
+        self.speedx = 0
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_a]:
+            self.speedx = -5
+        if keys[pygame.K_d]:
+            self.speedx = 5
+
+        if self.rect.x >= WIDTH - player_size_x:
+            self.rect.x = WIDTH - player_size_x - 5
+        if self.rect.x <= 0:
+            self.rect.x = 5
+
+        self.rect.x += self.speedx
 
     def create_bullet(self):
-        return Bullet(self.x, HEIGHT - 120, player_size_x)
+        bullet = Bullet(self.rect.centerx, self.rect.top)
+        all_sprites.add(bullet)
+        bullets.add(bullet)
 
 
 class Mob(pygame.sprite.Sprite):
@@ -62,24 +66,33 @@ class Mob(pygame.sprite.Sprite):
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, player_size_x):
-        super().__init__()
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface((5, 15))
         self.image.fill((255, 255, 255))
-        self.rect = self.image.get_rect(center=(pos_x + player_size_x // 2, pos_y))
+        self.rect = self.image.get_rect()
+        self.rect.bottom = y + 20
+        self.rect.centerx = x
+        self.speedy = -10
 
     def update(self):
-        self.rect.y -= 10
+        self.rect.y += self.speedy
 
         if self.rect.y <= -10:
             self.kill()
 
 
-player = Player()
-clock = pygame.time.Clock()
+all_sprites = pygame.sprite.Group()
 mobs = pygame.sprite.Group()
-bullet_group = pygame.sprite.Group()
-for i in range(10):
+bullets = pygame.sprite.Group()
+
+player = Player()
+
+all_sprites.add(player)
+
+clock = pygame.time.Clock()
+
+for i in range(500):
     m = Mob()
     mobs.add(m)
 
@@ -93,17 +106,25 @@ def main():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_w:
-                    bullet_group.add(player.create_bullet())
+                    player.create_bullet()
+
 
         clock.tick(60)
         screen.fill([100, 105, 0])
-        bullet_group.draw(screen)
-        player.draw()
-        mobs.draw(screen)
-        player.handle_keys()
-        bullet_group.update()
-        player.update()
+
+        all_sprites.update()
         mobs.update()
+
+        all_sprites.draw(screen)
+        mobs.draw(screen)
+
+        hit_player = pygame.sprite.spritecollide(player, mobs, True)
+        if hit_player:
+            print(hit_player)
+        hit_enemy = pygame.sprite.groupcollide(bullets, mobs, True, True)
+        if hit_enemy:
+            print(hit_enemy)
+
         pygame.display.flip()
 
 
