@@ -1,3 +1,5 @@
+import random
+
 import pygame
 pygame.init()
 
@@ -9,6 +11,8 @@ pygame.display.set_caption('Rain Shooter')
 
 playerIMG = pygame.image.load('images/playerIMG.png')
 playerIMG = pygame.transform.scale(playerIMG, (player_size_x, player_size_y))
+enemyIMG = pygame.image.load('images/enemy.png')
+enemyIMG = pygame.transform.scale(enemyIMG, (80, 80))
 
 
 class Player(object):
@@ -37,6 +41,26 @@ class Player(object):
         return Bullet(self.x, HEIGHT - 120, player_size_x)
 
 
+class Mob(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = enemyIMG
+        self.rect = self.image.get_rect()
+        self.rect.x = random.randrange(WIDTH - self.rect.width)
+        self.rect.y = random.randrange(-100, -40)
+        self.speedy = random.randrange(2, 6)
+        self.speedx = random.randrange(-2, 2)
+
+    def update(self):
+        self.rect.x += self.speedx
+        self.rect.y += self.speedy
+
+        if self.rect.top > HEIGHT + 10 or self.rect.left < -50 or self.rect.right > WIDTH + 50:
+            self.rect.x = random.randrange(WIDTH - self.rect.width)
+            self.rect.y = random.randrange(-100, -40)
+            self.speedy = random.randrange(2, 6)
+
+
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, player_size_x):
         super().__init__()
@@ -53,8 +77,11 @@ class Bullet(pygame.sprite.Sprite):
 
 player = Player()
 clock = pygame.time.Clock()
-
+mobs = pygame.sprite.Group()
 bullet_group = pygame.sprite.Group()
+for i in range(10):
+    m = Mob()
+    mobs.add(m)
 
 
 def main():
@@ -69,15 +96,14 @@ def main():
                     bullet_group.add(player.create_bullet())
 
         clock.tick(60)
-        screen.fill([120, 10, 70])
+        screen.fill([100, 105, 0])
         bullet_group.draw(screen)
         player.draw()
-
-        #screen.blit(playerIMG, (30, 30))
-
+        mobs.draw(screen)
         player.handle_keys()
         bullet_group.update()
         player.update()
+        mobs.update()
         pygame.display.flip()
 
 
