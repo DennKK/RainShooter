@@ -1,6 +1,7 @@
 import random
 
 import pygame
+
 pygame.init()
 
 size = WIDTH, HEIGHT = 650, 650
@@ -20,7 +21,7 @@ class Player(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.image = playerIMG
         self.rect = self.image.get_rect()
-        self.rect.centerx = WIDTH // 2 
+        self.rect.centerx = WIDTH // 2
         self.rect.top = HEIGHT - 120
         self.speedx = 0
 
@@ -92,13 +93,23 @@ all_sprites.add(player)
 
 clock = pygame.time.Clock()
 
-for i in range(500):
-    m = Mob()
-    mobs.add(m)
+
+def create_mobs():
+    for i in range(11):
+        m = Mob()
+        mobs.add(m)
+
+
+create_mobs()
+
+font = pygame.font.SysFont(None, 24)
 
 
 def main():
+    enemy = 0
+    kills = 0
     running = True
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -107,7 +118,6 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_w:
                     player.create_bullet()
-
 
         clock.tick(60)
         screen.fill([100, 105, 0])
@@ -120,10 +130,22 @@ def main():
 
         hit_player = pygame.sprite.spritecollide(player, mobs, True)
         if hit_player:
+            running = False
             print(hit_player)
         hit_enemy = pygame.sprite.groupcollide(bullets, mobs, True, True)
         if hit_enemy:
-            print(hit_enemy)
+            # Upper we spawn 10 enemies
+            # When the player kills 8 of them
+            # We spawn another 10 enemies
+            # Until player dies
+            enemy += 1
+            kills += 1
+            if enemy == 8:
+                enemy = 0
+                create_mobs()
+
+        kills_counter = font.render(f'{kills}/500', True, (0, 255, 0))
+        screen.blit(kills_counter, (20, 20))
 
         pygame.display.flip()
 
